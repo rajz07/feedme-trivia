@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - FeedMe Trivia</title>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #2E3192, #1BFFFF);
+            color: white;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Leaderboard Table */
+        .leaderboard-container {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            width: 90%;
+            max-width: 800px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+
+        th {
+            background: #FBC02D;
+            color: #000;
+            font-size: 1.2rem;
+        }
+
+        tr:nth-child(odd) {
+            background: #333;
+        }
+
+        tr:nth-child(even) {
+            background: #444;
+        }
+
+        td {
+            color: white;
+            font-size: 1rem;
+        }
+
+        /* Button */
+        #backButton {
+            margin-top: 20px;
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 65, 108, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        #backButton:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(255, 65, 108, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <h1>🏆 Leaderboard 🏆</h1>
+
+    <!-- Leaderboard Table -->
+    <div class="leaderboard-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboardBody">
+                <!-- Dynamic Data -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Back Button -->
+    <button id="backButton" onclick="window.history.back()">Back to Host</button>
+
+    <script>
+        const socket = io();
+        const leaderboardBody = document.getElementById("leaderboardBody");
+
+        // Fetch and populate leaderboard data
+        socket.emit("request_leaderboard");
+
+        socket.on("leaderboard", (data) => {
+            leaderboardBody.innerHTML = ""; // Clear existing rows
+            data.top10.forEach((player, index) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${index + 1}. ${player.username}</td>
+                    <td>${player.score.toFixed(4)}</td>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+        });
+    </script>
+</body>
+</html>

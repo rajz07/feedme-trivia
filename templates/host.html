@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Host - FeedMe Trivia</title>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Background Animation */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #003459);
+            background-size: 400% 400%;
+            animation: gradientBG 10s infinite ease-in-out;
+            color: #fff;
+            text-align: center;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Container */
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8);
+            animation: fadeIn 1.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Title */
+        h1 {
+            font-size: 3rem;
+            color: #00d9ff;
+            text-shadow: 0 0 15px #00d9ff;
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Game PIN */
+        .game-pin {
+            font-size: 1.5rem;
+            color: #f7e247;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            background: #333;
+            display: inline-block;
+            padding: 5px 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px #f7e247;
+        }
+
+        /* Buttons */
+        button {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 65, 108, 0.6);
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 15px rgba(255, 65, 108, 0.8);
+        }
+
+        /* Players List */
+        #playersGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .player-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            text-shadow: 0 0 3px black;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <h1>🎉 FeedMe Trivia 🎉</h1>
+    <div class="container">
+        <div class="game-pin">Game PIN: <b>{{ game_pin }}</b></div>
+        <button id="startGame">Start Game</button>
+        <button id="viewLeaderboard" onclick="location.href='/leaderboard'">View Leaderboard</button>
+
+        <!-- Players List -->
+        <h3 style="margin-top: 20px;">Players Joined</h3>
+        <div id="playersGrid">No players joined yet...</div>
+    </div>
+
+    <script>
+        const socket = io();
+        const startGameButton = document.getElementById("startGame");
+        const playersGrid = document.getElementById("playersGrid");
+
+        // Update players list dynamically
+        socket.on("player_list", (players) => {
+            playersGrid.innerHTML = "";
+            players.forEach(player => {
+                const card = document.createElement("div");
+                card.className = "player-card";
+                card.textContent = player;
+                playersGrid.appendChild(card);
+            });
+        });
+
+        // Start Game
+        startGameButton.addEventListener("click", () => {
+            socket.emit("start_game");
+        });
+    </script>
+</body>
+</html>

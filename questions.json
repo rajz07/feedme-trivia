@@ -1,0 +1,17 @@
+[
+    {
+        "question": "What is the capital of Japan?",
+        "options": ["Seoul", "Tokyo", "Beijing", "Bangkok"],
+        "correct": "Tokyo"
+    },
+    {
+        "question": "Which programming language is known as the 'mother of all languages'?",
+        "options": ["Python", "C", "Java", "Assembly"],
+        "correct": "C"
+    },
+    {
+        "question": "What does CPU stand for?",
+        "options": ["Central Process Unit", "Central Processing Unit", "Computer Personal Unit", "Central Processor Unit"],
+        "correct": "Central Processing Unit"
+    }
+]

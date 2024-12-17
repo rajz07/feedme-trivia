@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player - FeedMe Trivia</title>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #question {
+            font-size: 1.5rem;
+            margin: 20px;
+        }
+
+        .answers {
+            list-style: none;
+            padding: 0;
+        }
+
+        .answers li {
+            background: #140206;
+            margin: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .answers li:hover {
+            background: #FF4B2B;
+        }
+
+        #timerBar {
+            width: 90%;
+            height: 20px;
+            background: #ccc;
+            border-radius: 10px;
+            margin: 15px auto;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #timerFill {
+            width: 100%;
+            height: 100%;
+            background: #4CAF50;
+            animation: countdown 10s linear;
+        }
+
+        @keyframes countdown {
+            from {
+                width: 100%;
+            }
+            to {
+                width: 0%;
+            }
+        }
+
+        #usernamePrompt {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        #usernameInput {
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            font-size: 1rem;
+        }
+
+        #joinButton {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        #joinButton:hover {
+            background: #45a049;
+        }
+
+        #summarySection {
+            display: none;
+        }
+
+        .correct {
+            color: green;
+            font-weight: bold;
+        }
+
+        .incorrect {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 FeedMe Trivia 🎮</h1>
+
+    <!-- Username Prompt -->
+    <div id="usernamePrompt">
+        <label for="usernameInput">Enter your name to join:</label>
+        <input type="text" id="usernameInput" placeholder="Your name">
+        <button id="joinButton">Join Game</button>
+    </div>
+
+    <!-- Game Section -->
+    <div id="gameSection" style="display: none;">
+        <div id="question">Waiting for the question...</div>
+        <div id="timerBar">
+            <div id="timerFill"></div>
+        </div>
+        <ul id="answers" class="answers"></ul>
+    </div>
+
+    <!-- Summary Section -->
+    <div id="summarySection">
+        <h2>Game Summary</h2>
+        <ul id="summaryList" class="answers"></ul>
+    </div>
+
+    <script>
+        const socket = io();
+        const questionElement = document.getElementById("question");
+        const answersElement = document.getElementById("answers");
+        const usernamePrompt = document.getElementById("usernamePrompt");
+        const gameSection = document.getElementById("gameSection");
+        const summarySection = document.getElementById("summarySection");
+        const summaryList = document.getElementById("summaryList");
+        const timerFill = document.getElementById("timerFill");
+
+        let username;
+        let timerStartTime;
+
+        document.getElementById("joinButton").addEventListener("click", () => {
+            username = document.getElementById("usernameInput").value.trim();
+            if (username) {
+                socket.emit("join_game", { username });
+                usernamePrompt.style.display = "none";
+                gameSection.style.display = "block";
+            } else {
+                alert("Name is required to join the game.");
+            }
+        });
+
+        // New Question Handler
+        socket.on("new_question", (data) => {
+            questionElement.innerText = data.question; // Display the question text
+            answersElement.innerHTML = ""; // Clear previous answers
+
+            // Populate answer options
+            data.options.forEach(option => {
+                const li = document.createElement("li");
+                li.innerText = option;
+                li.onclick = () => submitAnswer(option);
+                answersElement.appendChild(li);
+            });
+
+            // Reset and restart the timer bar
+            timerFill.style.animation = "none";
+            void timerFill.offsetWidth; // Trigger reflow to reset animation
+            timerFill.style.animation = `countdown ${data.timer || 10}s linear`;
+
+            // Store the timer start time for accurate time tracking
+            timerStartTime = Date.now();
+        });
+
+        // Submit Answer
+        function submitAnswer(answer) {
+            const timeTaken = (Date.now() - timerStartTime) / 1000; // Time taken to answer
+            socket.emit("submit_answer", { username, answer, time_taken: timeTaken });
+            answersElement.innerHTML = "<p>Answer submitted! Waiting for the next question...</p>";
+        }
+
+        // Game Over Handler
+        socket.on("game_over", (data) => {
+            const playerSummary = data.summaries[username];
+            gameSection.style.display = "none";
+            summarySection.style.display = "block";
+
+            // Populate the summary
+            summaryList.innerHTML = playerSummary.map(entry => {
+                const isCorrect = entry.answer === entry.correct_answer;
+                return `<li class="${isCorrect ? 'correct' : 'incorrect'}">
+                    Q: ${entry.question} <br>
+                    Your Answer: ${entry.answer} <br>
+                    Correct Answer: ${entry.correct_answer}
+                </li>`;
+            }).join("");
+        });
+    </script>
+</body>
+</html>
